@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Unique Integer Choice Game</title>
+    <title>Coin Game</title>
     <style>
         /**
          * matcha.css — 3.0.0
@@ -24,14 +24,15 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js"></script>
 </head>
 <body>
-<h1>Unique Integer Choice Game</h1>
+<h1>Coin Game</h1>
 <h2>Random Game Display</h2>
-<canvas id="cv" width="1000" height="500" style="width: 100%"></canvas>
+<canvas id="cv" width="1000" height="500" style="width: 100%"><img id="bg" src="/background.jpeg" alt="Ein wunderschöner Holztisch"></canvas>
 <br><a href='/'><button>Return to start page</button></a>
 <script>
 const url = "/randomGame";
 const canvas = document.getElementById("cv")
 const ctx = canvas.getContext("2d");
+const bg = document.getElementById("bg");
 
 
 async function getGame() {
@@ -53,88 +54,145 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function coinPositions(n, r, x, y){
+    let t = n;
+    res = [];
+    for(let m = 1; t > 0; m++) {
+        for (let l = 0; l < m; l++){
+            for (let i = 0; i < l; i++){
+                res.push([r*(2*i-l+1) + x, r*Math.sqrt(3)*(l-2*m/3) + y]);
+                t--;
+            }
+        }
+    }
+    res = res.reverse();
+    return res.slice(0,n);
+}
+
+function drawCoin(p, r, c){
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(p[0], p[1], r, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = "rgb(255,212,38)"
+    ctx.beginPath();
+    ctx.arc(p[0], p[1], 4*r/5, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+function drawMark(p, r){
+    ctx.fillStyle = "rgb(0,205,97)"
+    ctx.beginPath();
+    ctx.arc(p[0], p[1], 1.5*r, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+function drawCoins(color, n, x, y, r, marked=false){
+    poss = coinPositions(n, r, x, y)
+
+    if (marked) {
+        for (const p of poss) {
+            drawMark(p, r);
+        }
+    }
+    for (const p of poss) {
+        drawCoin(p, r, color);
+    }
+
+    ctx.fillStyle = "rgba(7,7,7,85%)";
+    ctx.font = "bold "+5*r+"px ui-rounded";
+    ctx.fillText(n,x,y)
+}
+
 async function mainLoop(){
 while (true) {
     let game = await getGame();
     let names = game["names"];
-    let sub_list = game["submission-list"];
     let score_list = game["score-list"];
+    let coins_list = game["coins-list"];
     let n = game["n"];
-    let k = game["k"];
-    let w = game["w"];
+    let C = game["C"];
+    let r = game["r"];
     let ending = game["ending"];
     let winner = game["winner"];
     let value = game["value"];
 
-    ctx.font = "30px Calligraphy, cursive";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "rgb(0 60 0)";
-    ctx.fillRect(-1, -1, 1002, 502);
-
-
-    ctx.fillStyle = "rgb(240 240 240)";
+    let capitals = []
     for (let i = 0; i < n; i++) {
-        ctx.fillText(names[i], 1000*i/n + 500/n, 40);
+        capitals.push(C)
     }
 
-    ctx.fillRect(-1, 70, 1002, 2);
+    ctx.textAlign = "center";
 
-    for (let i = 0; i < sub_list.length; i++) {
-        ctx.fillStyle = "rgb(0 60 0)";
-        ctx.fillRect(-1, 460, 1002, 102);
-        ctx.fillStyle = "rgb(240 240 240)";
-        ctx.fillRect(-1, 460, 1002, 2);
-        await sleep(500)
+    for (let i = 0; i < coins_list.length; i++) {
+        ctx.drawImage(bg,0,0,1000,500);
 
         for (let j = 0; j < n; j++) {
-            ctx.fillStyle = "hsl("+(360*(sub_list[i][j]-1)/k)+" 90 50)";
-            ctx.fillText(sub_list[i][j], 1000*j/n + 500/n, 490);
+            ctx.fillStyle = "hsl("+(360*j/n)+" 90 50)";
+            ctx.font = "bold " + Math.min(50,250/names[j].length) + "px ui-rounded";
+            ctx.fillText(names[j], 1000*j/n + 500/n, 450);
+            ctx.font = "bold 40px ui-rounded";
+            ctx.fillText((i >= 1 ? score_list[i - 1][j] : 0), 1000*j/n + 500/n, 495);
         }
-        await sleep(1000)
-        ctx.fillStyle = "rgb(240 0 0)";
+
         for (let j = 0; j < n; j++) {
-            if (score_list[i][j] - (i >= 1 ? score_list[i - 1][j] : 0) == 0) {
-                ctx.fillRect(1000 * j / n + 500 / n - 15, 480, 30, 2);
+            drawCoins("hsl("+(360*j/n)+" 90 50)", capitals[j], 1000*j/n + 500/n, 300, 10);
+        }
+
+        await sleep(1000);
+
+        for (let j = 0; j < n; j++) {
+            capitals[j] -= coins_list[i][j]
+        }
+
+        ctx.drawImage(bg,0,0,1000,500);
+
+        for (let j = 0; j < n; j++) {
+            ctx.fillStyle = "hsl("+(360*j/n)+" 90 50)";
+            ctx.font = "bold " + Math.min(50,250/names[j].length) + "px ui-rounded";
+            ctx.fillText(names[j], 1000*j/n + 500/n, 450);
+            ctx.font = "bold 40px ui-rounded";
+            ctx.fillText((i >= 1 ? score_list[i - 1][j] : 0), 1000*j/n + 500/n, 495);
+        }
+
+        for (let j = 0; j < n; j++) {
+            drawCoins("hsl("+(360*j/n)+" 90 50)", capitals[j], 1000*j/n + 500/n, 300, 10);
+        }
+
+        for (let j = 0; j < n; j++) {
+            drawCoins("hsl("+(360*j/n)+" 90 50)", coins_list[i][j], 1000*j/n + 500/n, 150, 10);
+        }
+
+        await sleep(1000);
+
+        for (let j = 0; j < n; j++) {
+            if ((i >= 1 ? score_list[i - 1][j] : 0) !== score_list[i][j]) {
+                drawCoins("hsl("+(360*j/n)+" 90 50)", coins_list[i][j], 1000*j/n + 500/n, 150, 10, true);
             }
         }
-        await sleep(500)
-        ctx.fillStyle = "rgb(0 60 0)";
-        ctx.fillRect(-1, 80, 1002, 380);
-        ctx.fillStyle = "rgb(240 240 240)";
-        ctx.fillRect(-1, 460, 1002, 2);
-        ctx.beginPath();
-        ctx.setLineDash([10, 10]);
-        ctx.moveTo(0, 110);
-        ctx.lineTo(1000, 110);
 
-        ctx.textAlign = "left";
-        ctx.fillStyle = "rgb(10 10 10)";
-        ctx.fillText(w, 5, 107);
-        ctx.textAlign = "center";
-        ctx.fillStyle = "rgb(240 240 240)";
-        ctx.stroke();
-        for (let j = 0; j < n; j++) {
-            let s = (score_list[i][j]-1)%w==w-1?w:(score_list[i][j]%w);
-            ctx.fillRect(1000*j/n + 500/n - 10, 460-s*350/w, 20, s*350/w)
-            ctx.fillText(s, 1000*j/n + 500/n, 457-s*350/w);
-        }
-        await sleep(1000)
+        await sleep(1000);
     }
-    await sleep(1000)
-    ctx.fillStyle = "rgba(0 60 0 / 20%)";
-    for (let j = 0; j < 10; j++) {
-        ctx.beginPath();
-        ctx.ellipse(400+Math.random()*200, 200+Math.random()*100, 100+Math.random()*100, 100+Math.random()*100, Math.random()*2*Math.PI,0,2*Math.PI, false);
-        ctx.fill();
-        await sleep(100)
+
+    ctx.drawImage(bg,0,0,1000,500);
+    for (let j = 0; j < n; j++) {
+        ctx.fillStyle = "hsl("+(360*j/n)+" 90 50)";
+            ctx.font = "bold " + Math.min(50,250/names[j].length) + "px ui-rounded";
+        ctx.fillText(names[j], 1000*j/n + 500/n, 450);
+        ctx.font = "bold 40px ui-rounded";
+        ctx.fillText(score_list[score_list.length-1][j], 1000*j/n + 500/n, 495);
     }
-    ctx.fillStyle = "rgba(240 240 240 / 90%)";
-    ctx.font = "50px Calligraphy, cursive";
-    ctx.fillText(names[winner] + " won!", 500, 275);
-    await sleep(1000)
+
+    ctx.fillStyle = "rgb(50 50 50)"
+    ctx.font = "bold 150px ui-rounded";
+    if (ending == 1) {
+        ctx.fillText(names[winner] + " won!", 500, 200);
+    } else {
+        ctx.fillText("Draw", 500, 200);
+    }
+
+    await sleep(3000);
 }}
 
-mainLoop();
-
-
+window.addEventListener('load', mainLoop)
 </script>
