@@ -111,15 +111,12 @@ The following python code outputs random numbers in the range of $1$ to $n$:
 # read n, r, p, j
 n, rounds, players, j = map(int, input().split())
 #create random partition of [1, rounds]
-partition=sorted([randint(0,n+1) for _ in range(rounds-1)])
-#add start/end correctly
-partition.append(n)
-partition.insert(0,0)
+partition=sorted([0, n] + [randint(0,n+1) for _ in range(rounds-1)])
 
 # repeating for the whole game
-for round in range(rounds):
+for i in range(rounds):
     # outputting random integer
-    print(partition[round+1] - partition[round])
+    print(partition[i+1] - partition[i])
     # reading the input but ignoring it
     submitted_numbers = list(map(int, input().split()))</code></pre>
 <h3>C++</h3>
