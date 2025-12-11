@@ -595,6 +595,12 @@ async def startTournament(wrapper: pwTeamWrapper):
 async def getTeams():
     return list(teams.keys())
 
+@app.get("/background.jpeg")
+async def background():
+    def iterfile():
+        with open("assets/background.jpeg", mode="rb") as file_like:
+            yield from file_like
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8080)
