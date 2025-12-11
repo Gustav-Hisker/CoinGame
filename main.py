@@ -106,7 +106,7 @@ class ProgramHandler:
             resInt = int(result.strip())
         except:
             pass
-        if 1 <= resInt <= self.C:
+        if 0 <= resInt <= self.C:
             self.C -= resInt
             return resInt
         else:
