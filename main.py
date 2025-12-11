@@ -34,6 +34,9 @@ MaxCapital = 100
 MinRounds = 10
 MaxRounds = 10
 
+MinPlayers = 2
+MaxPlayers = 5
+
 USE_DOCKER = True
 
 makedirs(pyPath, exist_ok=True)
@@ -52,10 +55,12 @@ muCount = 0
 playedGames = 0
 
 class ProgramHandler:
-    def __init__(self, path: str, C: int, r: int) -> None:
+    def __init__(self, path: str, C: int, r: int, n: int, j: int) -> None:
         self.path = path
         self.C = C
         self.r = r
+        self.n = n
+        self.j = j
 
         cmd = [
             "docker", "run", "--rm", "-i", "--init",
@@ -79,10 +84,10 @@ class ProgramHandler:
         self.p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True, bufsize=1)
 
         # Send initial input
-        self.p.stdin.write(f"{n} {k} {w} {j}\n")
+        self.p.stdin.write(f"{C} {r} {n} {j}\n")
         self.p.stdin.flush()
 
-    def sendSubmissions(self, g: list[int]) -> None:
+    def sendRound(self, g: list[int]) -> None:
         self.p.stdin.write(" ".join(map(str, g)) + "\n")
         self.p.stdin.flush()
 
@@ -101,7 +106,8 @@ class ProgramHandler:
             resInt = int(result.strip())
         except:
             pass
-        if 1 <= resInt <= self.k:
+        if 1 <= resInt <= self.C:
+            self.C -= resInt
             return resInt
         else:
             raise Exception(f"{result.strip()} is no valid output")
@@ -109,17 +115,16 @@ class ProgramHandler:
     def __del__(self):
         try:
             self.p.terminate()
-            # self.p.kill()
         except Exception:
             pass
 
 
-def game(paths: list[str], k: int, w: int):
+def game(paths: list[str], C: int, r: int):
     n = len(paths)
     programs = []
     for i, p in enumerate(paths):
         try:
-            programs.append(ProgramHandler(p, n, k, w, i))
+            programs.append(ProgramHandler(p, C, r, n, i))
         except Exception as e:
             while programs:
                 del programs[0]
@@ -127,66 +132,79 @@ def game(paths: list[str], k: int, w: int):
             return
 
     scores = [0 for _ in programs]
-    submissions = [0 for _ in programs]
+    coins = [0 for _ in programs]
 
-    for _ in range(1000):
+    for round in range(r):
         for i, p in enumerate(programs):
             try:
-                submissions[i] = p.getOutput()
+                coins[i] = p.getOutput()
             except Exception as e:
                 while programs:
                     del programs[0]
                 yield True, -1, i, "Error reading output of the program: " + str(e)
                 return
 
-        for i, p in enumerate(programs):
-            try:
-                p.sendSubmissions(submissions)
-            except Exception as e:
-                while programs:
-                    del programs[0]
-                yield True, -1, i, "Error passing the input to program: " + str(e)
-                return
-
-        submissionCounts = {}
-
-        for submission in submissions:
-            if submission not in submissionCounts:
-                submissionCounts[submission] = 1
-            else:
-                submissionCounts[submission] += 1
-
-        for i, s in enumerate(submissions):
-            if submissionCounts[s] <= 1:
-                scores[i] += s
-                if scores[i] % w == 0:
-                    yield False, scores, submissions, "current game state"
+        if round < r - 1:
+            for i, p in enumerate(programs):
+                try:
+                    p.sendRound(coins)
+                except Exception as e:
                     while programs:
                         del programs[0]
-                    yield True, 1, i, "Win"
+                    yield True, -1, i, "Error passing the input to program: " + str(e)
                     return
 
-        yield False, scores, submissions, "current game state"
+        existsMax = False
+        maxCoins = 0
+        bestSpender = 0
+
+        for i, c in enumerate(coins):
+            if c > maxCoins:
+                maxCoins = c
+                bestSpender = i
+                existsMax = True
+            elif c == maxCoins:
+                existsMax = False
+
+        if existsMax:
+            scores[bestSpender] += 1
+
+        yield False, scores, coins, "current game state"
 
     while programs:
         del programs[0]
 
-    yield True, 0, 0, "Draw"
+    existsMax = False
+    maxScore = 0
+    winner = 0
+
+    for i, c in enumerate(scores):
+        if c > maxScore:
+            maxScore = c
+            winner = i
+            existsMax = True
+        elif c == maxCoins:
+            existsMax = False
+
+    if existsMax:
+        yield True, 1, winner, "Win"
+    else:
+        yield True, 0, 0, "Draw"
     return
 
 
 def testProgram(path: str):
     for i in range(25):
         try:
-            n = random.randint(MinPlayerCount, MaxPlayerCount + 1)
-            k = random.randint(MinK, MaxK + 1)
-            w = random.randint(MinW, MaxW + 1)
+            C = random.randint(MinCapital, MaxCapital)
+            r = random.randint(MinRounds, MaxRounds)
+            n = random.randint(MinPlayers, MaxPlayers)
             j = random.randrange(0, n)
 
             paths = [(path if i == j else testCode) for i in range(n)]
 
             outcome, program, value = None, None, None
-            for cs in game(paths, k, w):
+            for cs in game(paths, C, r):
                 _, outcome, program, value = cs
 
             if outcome == -1:
@@ -402,19 +420,19 @@ async def background():
 
 
 def getAllMatchUps():
-    for n in range(MinPlayerCount, MaxPlayerCount+1):
-        for k in range(MinK, MinK+1):
-            for w in range(MinW, MaxW+1):
+    for n in range(MinPlayers, MaxPlayers+1):
+        for C in range(MinCapital, MaxCapital+1):
+            for r in range(MinRounds, MaxRounds+1):
                 for mu in getAllMatchUpsWithFixedSize(allPrograms(), n):
-                    yield n, k, w, mu
+                    yield C, r, n, mu
 
 
 def getRandomMatchUp():
-    n = random.randint(MinPlayerCount, min(MaxPlayerCount, len(allPrograms())))
-    k = random.randint(MinK, MaxK)
-    w = random.randint(MinW, MaxW)
+    n = random.randint(MinPlayers, min(MaxPlayers, len(allPrograms())))
+    C = random.randint(MinCapital, MaxCapital)
+    r = random.randint(MinRounds, MaxRounds)
     mu = random.choice(list(getAllMatchUpsWithFixedSize(allPrograms(),n)))
-    return n, k, w, mu
+    return C, r, n, mu
 
 def getAllMatchUpsWithFixedSize(programs, n):
     if n > len(programs):
@@ -429,33 +447,33 @@ def getAllMatchUpsWithFixedSize(programs, n):
 
 @app.get("/randomGame", response_class=JSONResponse)
 def randomGame():
-    n, k, w, mu = getRandomMatchUp()
+    C, r, n, mu = getRandomMatchUp()
 
     names = [os.path.basename(f).removesuffix(".py") for f in mu]
 
     scoreList = []
-    submissionList = []
-    for gs in game(mu, k, w):
+    coinsList = []
+    for gs in game(mu, C, r):
         if gs[0]:
             _, ending, winner, value = gs
-            return {"n": n, "k": k, "w": w, "names": names, "score-list": scoreList, "submission-list": submissionList, "ending": ending, "winner": winner, "value": value}
+            return {"n": n, "C": C, "r": r, "names": names, "score-list": scoreList, "coins-list": coinsList, "ending": ending, "winner": winner, "value": value}
         else:
             scoreList.append(gs[1].copy())
-            submissionList.append(gs[2].copy())
-    return {"n": n, "k": k, "w": w, "names": names, "score-list": scoreList, "submission-list": submissionList, "ending": -1, "winner": -1, "value": "unknown error"}
+            coinsList.append(gs[2].copy())
+    return {"n": n, "C": C, "r": r, "names": names, "score-list": scoreList, "coins-list": coinsList, "ending": -1, "winner": -1, "value": "unknown error"}
 
 
 class TournamentThread(threading.Thread):
     def __init__(self, setting):
         threading.Thread.__init__(self)
-        self.n, self.k, self.w, self.mu  = setting
+        self.C, self.r, self.n, self.mu  = setting
 
     def run(self):
         global scores, playedGames
         d = 0
         ID = 0
 
-        for cs in game(self.mu, self.k, self.w):
+        for cs in game(self.mu, self.C, self.r):
             _, d, ID, _ = cs
 
         scores[self.mu[ID]] += d
