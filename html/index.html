@@ -48,13 +48,13 @@
     This means for example you can output using <code>cout</code> in C++ and using <code>print</code> or <code>printf</code> in python.
 </p>
 <p>
-    Initially, the input are the numbers $p$, $n$, $r$ and $j$; where $p$ is the number of players, 
+    Initially, the input are the numbers $n$, $r$, $p$ and $j$; where $p$ is the number of players, 
     $n$ the number of coins, $r$ the number of rounds, and $j$ is your position in the pool of players.
     This is done in the following format followed by a linebreak (<code>"\n"</code>):
-    <br><code>p n r j</code><br>
-    For example if $p=4$ (so there are $10$ players), $n=100$ (so you have $100$ coins at the start),
-    $r=10$ (there are ten rounds) and you're number is $2$ the input looks like this:
-    <br><code>4 100 10 2</code><br>
+    <br><code>n r p j</code><br>
+    For example if $n=100$ (so you have $100$ coins at the start), $r=10$ (there are ten rounds), 
+    $p=4$ (so there are $4$ players), and you're number is $2$ (you're the third player), the input looks like this:
+    <br><code>100 10 4 2</code><br>
 </p>
 <p>
     Then your program has to decide the first number it submits.
@@ -77,7 +77,7 @@
 </p>
 <p>
     As an example for a whole game. Here the "conversation" between <span style="color:magenta">your program</span> and <span style="color:green">the game</span>:
-    <br><code style="color:green">4 100 10 2</code>
+    <br><code style="color:green">100 10 4 2</code>
 
     <br><code style="color:magenta">33</code>
 
@@ -95,27 +95,30 @@
 </p>
 <h2>Example Code</h2>
 <h3>Python</h3>
-The following python code always outputs the highest possible number ($k$):
-<pre><code># read n, k, w and j
-n, k, w, j = map(int, input().split())
+The following python code always the same number and uses almost all coins:
+<pre><code># read n, r, p and j
+n, rounds, players, j = map(int, input().split())
 
 # repeating for the whole game
 while True:
-    # outputting the highest allowed number
-    print(k)
+    # outputting n/rounds rounded down
+    print(int(n/rounds))
     # reading the input but ignoring it
     submitted_numbers = list(map(int, input().split()))</code></pre>
-The following python code outputs random numbers in the range of $1$ to $k$:
+The following python code outputs random numbers in the range of $1$ to $n$:
 <pre><code># import random to get randomness
 from random import randint
 
-# read n, k, w and j
-n, k, w, j = map(int, input().split())
+# read n, r, p, j
+n, rounds, players, j = map(int, input().split())
 
 # repeating for the whole game
 while True:
     # outputting random integer
-    print(randint(1, k))
+    k=randint(0, n)
+    print(k)
+    #set number of coins after paying k coins
+    n=n-k
     # reading the input but ignoring it
     submitted_numbers = list(map(int, input().split()))</code></pre>
 <h3>C++</h3>
@@ -124,42 +127,48 @@ The following C++ code always outputs the highest possible number ($k$):
 #include &le;vector>
 
 int main(){
-    // read n, k, w and j
-    int n, k, w, j;
-    std::cin >> n >> k >> w >> j;
+    // read n, r,  and j
+    int n, rounds, players, j;
+    std::cin >> n >> rounds >> players >> j;
 
     // repeating for the whole game
     while (true){
-        // outputting the highest number
-        std::cout << k << std::endl;
+        // outputting the highest possible constant number
+        std::cout << n/rounds << std::endl;
         // reading the input but ignoring it
-        std::vector&le;int> submitted_numbers(n);
-        for (int i = 0; i < n; i++) {
+        std::vector&le;int> submitted_numbers(players);
+        for (int i = 0; i < players; i++) {
             std::cin >> submitted_numbers[i];
         }
     }
 }</code></pre>
-The following C++ code outputs random numbers in the range of $1$ to $k$:
+The following C++ code outputs random numbers in the range of $1$ to $n$:
 <pre><code>#include&le;iostream>
 #include &le;random> // for the randomness
 #include &le;vector>
 
 int main(){
-    // read n, k, w and j
-    int n, k, w, j;
-    std::cin >> n >> k >> w >> j;
+    // read n, r,  and j
+    int n, rounds, players, j;
+    std::cin >> n >> rounds >> players >> j;
 
     // creating a random device
     std::random_device rand_dev;
     // creating a random generator
     std::mt19937 gen(rand_dev());
     // creating distribution
-    std::uniform_int_distribution&le;int> distr(1, k);
-
+    std::uniform_int_distribution&le;int> distr(1, n);
+    int k;
     // repeating for the whole game
     while (true){
         // outputting random integer
-        std::cout << distr(gen) << std::endl;
+        k=distr(gen);
+        if(k<=n)
+            std::cout << distr(gen) << std::endl;
+            //update number of coins
+            n=n-k;
+        else
+            std::cout << 0 << std::endl;
         // reading the input but ignoring it
         std::vector&le;int> submitted_numbers(n);
         for (int i = 0; i < n; i++) {
