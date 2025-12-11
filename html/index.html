@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Unique Integer Choice Game</title>
+    <title>Coin Game</title>
     <style>
         /**
          * matcha.css — 3.0.0
@@ -24,23 +24,22 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js"></script>
 </head>
 <body style="padding-bottom: 30px">
-<h1>Unique Integer Choice Game</h1>
+<h1>Coin Game</h1>
 <h2>Explanation of the Task</h2>
 <p>
-    So the game is the following: You're in a pool of $n$ players. Also given are $k, w \in \Bbb Z^+$. You know $n$, $k$ and $w$.
-    Each turn you submit an integer $i$ where $1 \le i \le k$.
-    If you're the only one who submitted this integer then you get $i$ points added to your score $s$. Which starts at $0$.
+    Imagine that you and your opponents each have $n$ coins. In each round, you pay some of your coins (possibly $0$) and so do your opponents. 
+    The person who payed the most wins the round, and if multiple people payed the same highest amount, no one wins. In any case,
+    the coins you payed are gone and you play on with fewer coins, but you also know how much your opponents payed. The game is now 
+    repeated for some $r$ rounds, and whoever wins the most amount of rounds wins the game.
 </p>
 <p>
-    If $s \equiv 0 \pmod w \land s\not=0$ you've won.
-</p>
-<p>
-    After each turn you're told about the turns of all the other people.
+    To determine the winner of the tournament, your program is matched up many times against different programs, with $2$ to $5$ players per game. 
+    Then the total scores over all the matchups is calculated, and the highest score wins the tournament!
 </p>
 <h2>Explanation of the input and output format.</h2>
 <p>
-    At the beginning of a new game your program is executed as a new process. Meaning you can't remember previous games.
-    But indeed you can remember the previous rounds in the current game you're playing.
+    At the beginning of a new game your program is executed as a new process, meaning that you can't remember previous games.
+    But you can remember the previous rounds in the current game you're playing.
 </p>
 <p>
     All the input you get by <code>stdin</code>.
@@ -49,47 +48,48 @@
     This means for example you can output using <code>cout</code> in C++ and using <code>print</code> or <code>printf</code> in python.
 </p>
 <p>
-    As input initially it's send the number $n$, $k$, $w$ and $j$ where $n$, $k$ and $w$ are as before and $j$ is your position in the pool of players.
+    Initially, the input are the numbers $p$, $n$, $r$ and $j$; where $p$ is the number of players, 
+    $n$ the number of coins, $r$ the number of rounds, and $j$ is your position in the pool of players.
     This is done in the following format followed by a linebreak (<code>"\n"</code>):
-    <br><code>n k w j</code><br>
-    For example if $n=10$ (so there are $10$ players), $k=5$ (meaning you can choose your numbers between $1$ and $5$),
-    $w=50$ (you win with a score equal to a multiple of $50$) and you're number is $7$ the input looks like this:
-    <br><code>10 5 50 7</code><br>
+    <br><code>p n r j</code><br>
+    For example if $p=4$ (so there are $10$ players), $n=100$ (so you have $100$ coins at the start),
+    $r=10$ (there are ten rounds) and you're number is $2$ the input looks like this:
+    <br><code>4 100 10 2</code><br>
 </p>
 <p>
     Then your program has to decide the first number it submits.
-    If you're output is not an integer between $1$ and $k$ then you're immediately disqualified.
+    If you're output is not an integer between $0$ and $n$ then you're immediately disqualified.
     <b>IMPORTANT:</b> You have to end your output with a linebreak (<code>"\n"</code>).
 </p>
 <p>
-    Now you get all the submissions $i_0, ..., i_j, ... i_{n-1}$ that were done by you and the other players.
-    Where $i_x$ is the number submitted by the $x$-th player. So $i_j$ is the number you submitted.
+    Now you get all the submissions $i_0, ..., i_j, ... i_{p-1}$ that were done by you and the other players.
+    Where $i_k$ is the number submitted by the $k$-th player. So $i_j$ is the number you submitted.
     Your code gets them in the following format:
-    <br><code>i_0 i_1 ... i_j ... i_(n-1)</code>
+    <br><code>i_0 i_1 ... i_j ... i_(p-1)</code>
 </p>
 <p>
-    As an example: There are 4 players. The first/$0$-th player submits $1$, the second/$1$-th player submits $3$, the next one submits $1$ and the last one submits $2$.
-    <br><code>1 3 1 2</code><br>
-    (In this case the second/$1$-th player gets $3$ points and the last one gets $2$ points)
+    For example: There are $4$ players. The first player (index $0$) submits $15$, the second player (index $1$) submits $32$, the next one submits $6$ and the last one submits $21$.
+    <br><code>15 32 6 21</code><br>
+    (In this case the second player wins the round)
 </p>
 <p>
-    Then again you have to submit a new number and . From here on it just repeats.
+    Then again you have to submit a new number in the new correct range and so on.
 </p>
 <p>
     As an example for a whole game. Here the "conversation" between <span style="color:magenta">your program</span> and <span style="color:green">the game</span>:
-    <br><code style="color:green">10 5 20 7</code>
+    <br><code style="color:green">4 100 10 2</code>
 
-    <br><code style="color:magenta">5</code>
+    <br><code style="color:magenta">33</code>
 
-    <br><code style="color:green">5 2 4 4 2 1 3 5 4 5</code>
+    <br><code style="color:green">20 8 33 32</code>
 
-    <br><code style="color:magenta">5</code>
+    <br><code style="color:magenta">13</code>
 
-    <br><code style="color:green">3 4 5 1 3 2 3 5 1 2</code>
+    <br><code style="color:green">35 37 13 43</code>
 
     <br><code style="color:magenta">3</code>
 
-    <br><code style="color:green">3 2 5 4 1 4 3 3 1 2</code>
+    <br><code style="color:green">0 13 3 16</code>
 
     <br><code>...</code>
 </p>
