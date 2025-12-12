@@ -410,6 +410,12 @@ async def randomGameDisplay():
         return f.read()
 
 
+@app.get("/randomGameLog", response_class=HTMLResponse)
+async def randomGameDisplay():
+    with open("html/log.html") as f:
+        return f.read()
+
+
 @app.get("/background.jpeg")
 async def background():
     def iterfile():
