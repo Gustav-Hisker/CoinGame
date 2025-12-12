@@ -411,7 +411,7 @@ async def randomGameDisplay():
 
 
 @app.get("/randomGameLog", response_class=HTMLResponse)
-async def randomGameDisplay():
+async def randomGameLog():
     with open("html/log.html") as f:
         return f.read()
 
