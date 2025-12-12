@@ -1,5 +1,5 @@
-#include&le;iostream>
-#include &le;vector>
+#include <iostream>
+#include <vector>
 
 int main(){
     // read n, r,  and j
@@ -11,7 +11,7 @@ int main(){
         // outputting the highest possible constant number
         std::cout << n/rounds << std::endl;
         // reading the input but ignoring it
-        std::vector&le;int> submitted_numbers(players);
+        std::vector<int> submitted_numbers(players);
         for (int i = 0; i < players; i++) {
             std::cin >> submitted_numbers[i];
         }

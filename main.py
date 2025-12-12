@@ -183,7 +183,7 @@ def game(paths: list[str], C: int, r: int):
             maxScore = c
             winner = i
             existsMax = True
-        elif c == maxCoins:
+        elif c == maxScore:
             existsMax = False
 
     if existsMax:

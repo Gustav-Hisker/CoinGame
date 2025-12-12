@@ -1,7 +1,9 @@
-#include &le;random> // for the randomness
-#include &le;vector>
+#include <random> // for the randomness
+#include <vector>
 #include <algorithm>
-using vec=std::vector&le;int>;
+#include <iostream>
+
+using vec=std::vector<int>;
 
 int main(){
     // read n, r,  and j
@@ -15,20 +17,20 @@ int main(){
     // creating a random generator
     std::mt19937 gen(rand_dev());
     // creating distribution
-    std::uniform_int_distribution&le;int> distr(1, n);
+    std::uniform_int_distribution<int> distr(1, n);
     //create a random integral, increasing sequence in [0;n] including both endpoints
     vec partitions=vec(rounds+1);
     partitions[0]=0; partitions[rounds]=n;
-    for(int i=1; i< rounds; i++) partitions[i]=distr(gen);
-    partitions=std::sort(partitions);
+    for(int i=1; i < rounds; i++) partitions[i]=distr(gen);
+    std::sort(partitions.begin(), partitions.end());
     // repeating for the whole game
     for(int i=0; i<rounds; i++){
         // outputting random integer
         std::cout << partitions[i+1]-partitions[i] << std::endl;
         //set number of coins to new number
         // reading the input but ignoring it
-        std::vector<int> submitted_numbers(n);
-        for (int i = 0; i < n; i++) {
+        std::vector<int> submitted_numbers(players);
+        for (int i = 0; i < players; i++) {
             std::cin >> submitted_numbers[i];
         }
     }
